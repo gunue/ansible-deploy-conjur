@@ -1,0 +1,10 @@
+---
+- name: Install Podman
+  yum: name=podman state=present
+
+  #- name: Loads appliance image
+  #- containers.podman.podman_image:
+  #    name: "{{ appliance_address }}"
+  #    tag: "{{ version }}"
+
+

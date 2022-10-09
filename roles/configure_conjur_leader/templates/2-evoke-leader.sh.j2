@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# CONFIGURE: Basic Script to configure Conjur container as Leader (Master) Server (conjur1)
+
+# Global Variables
+containerName='{{ containername }}'
+serverType="master"
+leaderDNS='{{ leaderDNS }}'
+clusterDNS='{{ clusterDNS }}'
+standby1DNS='{{ standby1DNS }}'
+standby2DNS='{{ standby2DNS }}'
+adminPass='{{ adminPass }}'
+accountName='{{ accountName }}'
+
+# EVOKE: Execute evoke command to configure Conjur container as Leader (Master) Server
+sudo podman exec $containerName evoke configure $serverType --accept-eula --hostname $clusterDNS --master-altnames "$leaderDNS,$standby1DNS,$standby2DNS" -p $adminPass $accountName

@@ -1,0 +1,38 @@
+---
+- name: Include group vars for this Role
+  include_vars: synchronizer.yml
+
+- name: Create regarding policy directory
+  become: yes
+  ansible.builtin.file:
+    path: '{{ policy_file_dir }}'
+    state: directory
+    mode: '0755'
+
+- name: Import desired policies to host
+  become: yes
+  template:
+    src: '{{ item }}.j2'
+    dest: '{{ policy_file_dir }}/{{ item }}'
+  loop: '{{ desired_policies }}'
+
+- name: Load Vault Policy to root branch
+  become: yes
+  ansible.builtin.shell: "/usr/local/bin/conjur -i policy load -b root -f {{ policy_file_dir }}/vault.yml"
+
+- name: Load Lob User Policy to '{{ VaultName }}' branch
+  become: yes
+  ansible.builtin.shell: "/usr/local/bin/conjur -i policy load -b {{ VaultName }} -f {{ policy_file_dir }}/lob_user.yml"
+
+- name: Load Safe Admin Policy to '{{ LobuserName }}'
+  become: yes
+  ansible.builtin.shell: "/usr/local/bin/conjur -i policy load -b {{ VaultName }}/{{ LobuserName }} -f {{ policy_file_dir }}/safe_name.yml"
+
+- name: Load delegation Policy to '{{ SafeName }}' branch
+  become: yes
+  ansible.builtin.shell: "/usr/local/bin/conjur -i policy load -b {{ VaultName }}/{{ LobuserName }}/{{ SafeName }} -f {{ policy_file_dir }}/delegation.yml"
+
+- name: Load consumers Policy to delegation branch
+  become: yes
+  ansible.builtin.shell: "/usr/local/bin/conjur -i policy load -b {{ VaultName }}/{{ LobuserName }}/{{ SafeName }}/delegation -f {{ policy_file_dir }}/consumers.yml"
+

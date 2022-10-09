@@ -1,0 +1,20 @@
+---
+- !policy
+  id: conjur
+  body:
+    - !policy
+        id: cluster/{{ my_cluster_name }}
+        annotations:
+          ttl: {{ ttl_cluster }}
+        body:
+        - !layer
+        - &hosts
+          - !host
+            id: {{ leaderDNS }}
+          - !host
+            id: {{ standby1DNS }}
+          - !host
+            id: {{ standby2DNS }}
+        - !grant
+          role: !layer
+          member: *hosts

@@ -1,0 +1,15 @@
+---
+policy_file_dir: /home/policy/directory
+VaultName: VAULTNAME_DEV
+SyncServerHostname: SYNCHOST_DEV
+LobuserName: LOBUSER_DEV
+SafeName: SAFENAME_DEV
+
+desired_policies:
+  - vault.yml
+  - consumers.yml
+  - delegation.yml
+  - lob_user.yml
+  - safe_name.yml
+
+

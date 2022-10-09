@@ -1,0 +1,8 @@
+---
+- name: Include vars
+  include_vars: conjur_vms.yml
+
+- name: Enroll Standby to Cluster
+  shell: podman exec conjur evoke cluster enroll -n {{ inventory_hostname }} -m {{ leaderDNS }} {{ my_cluster_name }}
+
+  

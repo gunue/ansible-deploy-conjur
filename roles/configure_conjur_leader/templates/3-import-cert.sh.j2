@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# IMPORT: Basic Script to import SSL certificate for Conjur Leader (Master) Server
+
+# Global Variables
+hostDir="{{ cert_source }}" #Directory where cacert .cer and .key are located
+certDir="{{ cert_target }}" #Directory may change depending on 1-install-leader.sh
+containerName="{{ containername }}"
+
+# Copy SSL certificates to Conjur Leader (Master) Server
+sudo cp $hostDir/*.cer $certDir/
+sudo cp $hostDir/*.key $certDir/
+sudo "{{ engine }}" exec $containerName mkdir -p $certDir
+sudo "{{ engine }}" cp $certDir/cacert.cer $containerName:$certDir/cacert.cer
+sudo "{{ engine }}" cp $certDir/conjur-leader.cer $containerName:$certDir/conjur-leader.cer
+sudo "{{ engine }}" cp $certDir/conjur-leader.key $containerName:$certDir/conjur-leader.key
+#sudo "{{ engine }}" cp $certDir/conjur-follower.cer $containerName:$certDir/conjur-follower.cer
+#sudo "{{ engine }}" cp $certDir/conjur-follower.key $containerName:$certDir/conjur-follower.key
+
+# Import SSL certificates to Conjur Leader (Master) Server
+sudo "{{ engine }}" exec $containerName evoke ca import --no-restart --force --root $certDir/cacert.cer
+sudo "{{ engine }}" exec $containerName evoke ca import --no-restart --key $certDir/conjur-leader.key --set $certDir/conjur-leader.cer
+#sudo "{{ engine }}" exec $containerName evoke ca import --no-restart --key $certDir/conjur-follower.key $certDir/conjur-follower.cer
+
+# Restart Conjur Services
+sudo "{{ engine }}" exec $containerName sv restart conjur nginx pg
+sleep 5
+sudo "{{ engine }}" exec $containerName sv restart seed

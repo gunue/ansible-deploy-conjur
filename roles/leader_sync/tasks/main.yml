@@ -1,0 +1,7 @@
+---
+- name: Include vars
+  include_vars: conjur_vms.yml
+
+- name: Sync Replication Leader
+  ansible.builtin.shell: sudo "{{ engine }}" exec "{{ containername }}" evoke replication sync start --force
+  tags: evokesync_leader

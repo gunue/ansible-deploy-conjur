@@ -1,0 +1,11 @@
+---
+- name: Group of Conjur Policies for Vault Synchronizer
+  hosts: leader
+  remote_user: rocky
+  roles:
+    - roles/conjur_policy_group_synchronizer
+  become: yes
+  become_user: root
+  tags: synchronizer_policies
+
+

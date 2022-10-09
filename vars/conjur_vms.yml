@@ -1,0 +1,49 @@
+---
+engine: 'podman' #container engine
+username: 'rocky' #vm user to handle operations
+required_dirs: #do not change ordering, used in policy loads
+  - /opt/cyberark/dap/security #docker_seccomp_loc
+  - /opt/cyberark/dap/config #config_file_loc
+  - /opt/cyberark/dap/backups #backups_loc
+  - /opt/cyberark/dap/seeds #seed_loc
+  - /opt/cyberark/dap/logs #log_loc
+  - /opt/cyberark/dap/certificates #cert_loc
+  - /opt/InstallFiles #install_loc
+  - /opt/InstallFiles/conjur_certs #cert file locations in VMs
+conjur_dir: cyberark/dap #!! should be same as in the required_dirs
+
+################
+### Appliance image should be placed below beforehand of running this playbook
+###############
+
+appliance_address: 'registry.tld/conjur-appliance' #loaded image tag
+setupDir: '/opt/InstallFiles' #dir for setup operations
+version: "12.7.0" #the tag for image
+seccomp_profile: true # true or false
+
+################
+### If third party certs will be used, they should be placed in ./template/certs before running this playbook, naming should be same as in examples.
+###############
+
+third_party_cert: true
+cert_source: '/opt/InstallFiles/conjur_certs' #source location certificates
+cert_target: '/opt/cyberark/dap/certificates' #directory under opt should be same with required dirs
+containername: conjur
+
+########
+### If more than 2 standby is used, modify regarding playbooks
+########
+
+leaderDNS: ""
+clusterDNS: ""
+standby1DNS: ""
+standby2DNS: ""
+
+my_cluster_name: "my-cluster"
+ttl_cluster: "60"
+
+#############PASSWORD##############
+adminPass: "CyberArk!123"
+###################################
+
+accountName: "myaccount"

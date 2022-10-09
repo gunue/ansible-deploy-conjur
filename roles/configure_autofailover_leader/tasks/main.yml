@@ -1,0 +1,23 @@
+---
+- name: Include vars
+  include_vars: conjur_vms.yml
+
+- name: Init conjur ########INSECURE########
+  shell: /usr/local/bin/conjur -i init -u https://{{ leaderDNS }} --force
+
+- name: Conjur Login  ########INSECURE########
+  shell: /usr/local/bin/conjur -i login -i admin -p '{{ adminPass }}'
+
+- name: Places cluster_policy.json
+  ansible.builtin.template: 
+    src: cluster_policy.yml.j2
+    dest: '{{ required_dirs[6] }}/cluster_policy.yml' #into defined security directory in group_vars
+
+- name: Load Cluster Policy  ########INSECURE########
+  shell: /usr/local/bin/conjur -i policy load -b root -f {{ required_dirs[6] }}/cluster_policy.yml
+
+#For below task to work, master should ssh to standbys
+
+- name: Enroll Leader to Cluster
+  shell: podman exec conjur evoke cluster enroll -n {{ leaderDNS }} {{ my_cluster_name }}
+  

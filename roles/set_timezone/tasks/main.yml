@@ -1,0 +1,4 @@
+---
+- name: Set timezone to Europe/Istanbul
+  community.general.timezone:
+    name: Europe/Istanbul

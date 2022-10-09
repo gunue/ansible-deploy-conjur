@@ -1,0 +1,52 @@
+---
+- name: Include vars
+  include_vars: conjur_vms.yml
+
+- name: Places seccomp.json with defaults
+  ansible.builtin.template: 
+    src: seccomp.json.j2
+    dest: '{{ required_dirs[0] }}/seccomp.json' #into defined security directory in group_vars
+  tags: seccomp_profile
+  when: seccomp_profile | bool
+
+- name: Placing install_standby.sh with seccomp
+  ansible.builtin.template:
+    src: install-standby-seccomp.sh.j2
+    dest: /tmp/install-standby.sh
+    mode: 0775
+  tags: install_standby_seccomp
+  when: seccomp_profile | bool
+
+#For below task to work, master should ssh to standbys
+- name: Transfer seed files from master to concerning standbys 
+  synchronize:
+    src: "{{ setupDir + '/standby-' + inventory_hostname + '-seed.tar'}}"
+    dest: "{{ setupDir }}"
+  delegate_to: "{{ leaderDNS }}"
+
+- name: Placing install_standby.sh
+  ansible.builtin.template:
+    src: install-standby.sh.j2
+    dest: /tmp/install-standby.sh
+    mode: 0775
+  when: not seccomp_profile
+
+  ###Below task places 1st 2nd, 3rd and 4th installation scripts to /tmp
+  ###runs conjur, evokes it as leader, imports certificates from VM, 
+  ###and create seedfiles from leader for standbys. If any of these two roles fails
+  ###removes scripts and deletes container
+  ###
+  ###
+- name: Execute scripts, roll-out if fails
+  
+  block:
+    - name: Execute install-standby.sh
+      ansible.builtin.shell: /tmp/install-standby.sh
+
+  rescue: 
+    - name: Roll-out
+      ansible.builtin.shell: "{{ item }}"
+      with_items: 
+      - podman rm -f '{{ containername }}'
+      - rm -rf /tmp/install-standby.sh
+

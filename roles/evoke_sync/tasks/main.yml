@@ -1,0 +1,4 @@
+---
+- name: Sync Replication Standbys
+  ansible.builtin.shell: sudo "{{ engine }}" exec "{{ containername }}" evoke replication sync enable
+  tags: evokesync_standby

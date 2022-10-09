@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# CREATE: Basic Script to create Seed Archive Files from Conjur Leader (Master) for Standby Servers
+
+# Global Variables
+containerName="{{ containername }}"
+serverType="standby"
+standby1DNS="{{ standby1DNS }}"
+standby2DNS="{{ standby2DNS }}"
+leaderDNS="{{ leaderDNS }}"
+username="{{ username }}"
+conjur2DNS="{{ standby1DNS }}"
+conjur3DNS="{{ standby2DNS }}"
+setupDir="{{ setupDir }}"
+
+# Create Seed Archive File
+echo "Creating seed archive files"
+echo "------------------------------------"
+set -x
+sudo "{{ engine }}" exec -t $containerName bash -c "evoke seed $serverType $standby1DNS $leaderDNS > /tmp/$serverType-$standby1DNS-seed.tar"
+sudo "{{ engine }}" exec -t $containerName bash -c "evoke seed $serverType $standby2DNS $leaderDNS > /tmp/$serverType-$standby2DNS-seed.tar"
+set +x
+
+# Copy Seed Archive from Leader
+echo "Copy seed archive files from Leader"
+echo "------------------------------------"
+set -x
+sudo "{{ engine }}" cp $containerName:/tmp/$serverType-$standby1DNS-seed.tar "{{ setupDir }}"
+sudo "{{ engine }}" cp $containerName:/tmp/$serverType-$standby2DNS-seed.tar "{{ setupDir }}"
+set +x
+
+## Copy Seed Archive to Conjur Hosts
+#echo "Copy seed archive files to Conjur Hosts"
+#echo "------------------------------------"
+#set -x
+#scp $serverType-$standby1DNS-seed.tar $username@$conjur2DNS:$setupDir
+#scp $serverType-$standby2DNS-seed.tar $username@$conjur3DNS:$setupDir
+#set +x

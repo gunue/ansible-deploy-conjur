@@ -1,0 +1,91 @@
+---
+##### Deploys HA Conjur Cluster with AutoFailover
+
+- name: Prepare VMs for Installation
+  hosts: conjur_vms
+  remote_user: root
+  roles:
+    - roles/install_packages
+    - roles/selinux_configuration
+    - roles/set_timezone
+    - roles/configure_chronyd
+      #- roles/systemd_operations
+    - roles/update_all_packages
+    - roles/reboot_server
+    - roles/create_dirs
+    - roles/load_image_podman 
+  become: yes
+  #become_user: root
+
+- name: Configure Conjur Leader
+  hosts: leader
+  remote_user: root
+  roles:
+   - roles/configure_conjur_leader
+  become: yes
+  tags: configure_leader
+  #become_user: root
+
+- name: Configure Conjur Standbys
+  hosts: standbys
+  remote_user: rocky
+  roles:
+    - roles/configure_conjur_standbys
+  become: yes
+  tags: configure_standbys
+  #become_user: root
+
+- name: Leader Sync
+  hosts: leader
+  remote_user: rocky
+  roles:
+    - roles/leader_sync
+  become: yes
+  #become_user: root
+  tags: leader_sync
+
+- name: Configure Leader for AutoFailover
+  hosts: leader
+  remote_user: rocky
+  roles:
+    - roles/configure_autofailover_leader
+  become: yes
+  #become_user: root
+  tags: failover
+
+- name: Configure Standbys for AutoFailover
+  hosts: standbys
+  remote_user: rocky
+  roles:
+    - roles/configure_autofailover_standby
+  become: yes
+  #become_user: root
+  tags: failover
+
+- name: Sync Replication For Standby1 for AutoFailover
+  hosts: standby1
+  remote_user: rocky
+  roles:
+    - roles/evoke_sync
+  become: yes
+  #become_user: root
+  tags: failover 
+
+- name: Sync Replication For Standby1 for AutoFailover
+  hosts: standby2
+  remote_user: rocky
+  roles:
+    - roles/evoke_async
+  become: yes
+  #become_user: root
+  tags: failover
+
+- name: Leader Sync
+  hosts: leader
+  remote_user: rocky
+  roles:
+    - roles/leader_sync
+  become: yes
+  #become_user: root
+  tags: failover
+

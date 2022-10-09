@@ -1,0 +1,12 @@
+---
+chrony_commands:
+  driftfile: /var/lib/chrony/drift
+  logdir: /var/log/chrony
+  makestep: '1.0 3'
+  keyfile: /etc/chrony.key
+  leapsectz: right/UTC
+  rtcsync: true
+  server:
+    - 169.254.169.123 iburst # Amazon NTP
+chrony_sysconfig: ''
+...

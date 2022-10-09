@@ -1,0 +1,92 @@
+---
+- name: Include required vars
+  include_vars: conjur_vms.yml
+
+- name: Places seccomp.json with defaults
+  ansible.builtin.template: 
+    src: seccomp.json.j2
+    dest: '{{ required_dirs[0] }}/seccomp.json' #into defined security directory in group_vars
+  tags: seccomp_profile
+  when: seccomp_profile | bool
+
+- name: Placing 1-install_leader.sh with seccomp
+  ansible.builtin.template:
+    src: 1-install-leader-seccomp.sh.j2
+    dest: /tmp/1-install-leader.sh
+    mode: 0775
+  tags: install_leader_seccomp
+  when: seccomp_profile | bool
+
+- name: Placing 1-install_leader.sh
+  ansible.builtin.template:
+    src: 1-install-leader.sh.j2
+    dest: /tmp/1-install-leader.sh
+    mode: 0775
+  tags: install_leader
+  when: not seccomp_profile
+
+- name: Placing 2-evoke_leader.sh
+  ansible.builtin.template:
+    src: 2-evoke-leader.sh.j2
+    dest: /tmp/2-evoke-leader.sh
+    mode: 0775
+  tags: evoke_leader
+
+- name: Send certificates to Leader
+  template:
+    src: "{{ item }}"
+    dest: "{{ cert_source }}/{{ item | basename | regex_replace('\\.j2$', '') }}"
+  with_fileglob:
+    - ./templates/certs/*.j2
+  when: third_party_cert | bool
+  tags: send_certs
+
+- name: Placing 3-import-cert.sh
+  ansible.builtin.template:
+    src: 3-import-cert.sh.j2
+    dest: /tmp/3-import-cert.sh
+    mode: 0775
+  tags: import_certificates
+  when: third_party_cert | bool
+  tags: send_certs
+
+- name: Placing 4-create-standby-seedfiles.sh
+  ansible.builtin.template:
+    src: 4-create-standby-seedfiles.sh.j2
+    dest: /tmp/4-create-standby-seedfiles.sh
+    mode: 0775
+  tags: create_seeds  
+  
+##Below task places 1st 2nd, 3rd and 4th installation scripts to /tmp
+##runs conjur, evokes it as leader, imports certificates from VM, 
+##and create seedfiles from leader for standbys. If any of those fails
+##removes scripts and deletes container
+##
+##
+- name: Execute 1st, 2nd, 3rd and 4th scripts, roll-out if fails
+  
+  block:
+    - name: Execute 1-install-leader.sh
+      ansible.builtin.shell: /tmp/1-install-leader.sh
+      tags: install_leader 
+
+    - name: Execute 2-evoke_leader.sh
+      ansible.builtin.shell: /tmp/2-evoke-leader.sh
+      tags: evoke_leader
+
+    - name: Execute 3-import-cert.sh
+      ansible.builtin.shell: /tmp/3-import-cert.sh
+      tags: evoke_leader
+      when: third_party_cert | bool
+
+    - name: Execute 4-create-standby-seedfiles.sh
+      ansible.builtin.shell: /tmp/4-create-standby-seedfiles.sh
+      tags: create_seeds
+
+  rescue: 
+    - name: Roll-out
+      ansible.builtin.shell: "{{ item }}"
+      with_items: 
+      - sudo podman rm -f '{{ containername }}'
+      - rm -rf /tmp/1-install-leader.sh.j2 /tmp/2-evoke-leader.sh /tmp/3-import-cert.sh /tmp/4-create-standby-seedfiles.sh
+

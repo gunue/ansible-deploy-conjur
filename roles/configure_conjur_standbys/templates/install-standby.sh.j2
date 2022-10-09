@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# INSTALL: Basic Script to install Conjur Standby Server (conjur2)
+
+# Global Variables
+serverType="standby"
+containerName="{{ containername }}"
+standbyDNS="{{ inventory_hostname }}"
+setupDir="{{ setupDir  }}"
+version="{{ version }}"		## Change to installation version
+directory="{{ conjur_dir }}"
+
+# Create Container (Conjur Standby Server)
+echo "Creating Docker Container: $containerName"
+echo "------------------------------------"
+set -x
+sudo '{{ engine }}' run \
+    --name $containerName \
+    --detach \
+    --restart=unless-stopped \
+    --security-opt apparmor=unconfined \
+    --publish "443:443" \
+    --publish "5432:5432" \
+    --publish "1999:1999" \
+    --log-driver journald \
+    --volume /opt/$directory/config:/etc/conjur/config:Z \
+    --volume /opt/$directory/security:/opt/cyberark/dap/security:Z \
+    --volume /opt/$directory/backups:/opt/conjur/backup:Z \
+    --volume /opt/$directory/seeds:/opt/cyberark/dap/seeds:Z \
+    --volume /opt/$directory/logs:/var/log/conjur:Z \
+    registry.tld/conjur-appliance:$version
+set +x
+
+# Copy Seed Archive to Server Container
+echo "Copy seed archive to container: $containerName"
+echo "------------------------------------"
+set -x
+sudo '{{ engine }}' cp $setupDir/$serverType-$standbyDNS-seed.tar $containerName:/tmp
+set +x
+
+# Unpack the Seed Archive
+echo "Unpack seed archive file"
+echo "------------------------------------"
+set -x
+sudo '{{ engine }}' exec $containerName bash -c "evoke unpack seed /tmp/$serverType-$standbyDNS-seed.tar"
+set +x
+
+# Install & Configure Server
+echo "Install & Configure Server: $standbyDNS"
+echo "------------------------------------"
+set -x
+sudo '{{ engine }}' exec $containerName evoke configure $serverType
+set +x

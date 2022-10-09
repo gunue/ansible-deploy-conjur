@@ -1,0 +1,10 @@
+---
+- name: Load required vars 
+  include_vars: conjur_vms.yml
+
+- name: Create required directories if it does not exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ required_dirs }}"

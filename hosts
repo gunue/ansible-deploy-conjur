@@ -1,0 +1,19 @@
+#[newservers] 
+
+[leader]
+IP.eu-north-1.compute.internal ansible_ssh_host=IP ansible_user=rocky
+
+[standby1]
+IP.eu-north-1.compute.internal ansible_ssh_host=IP ansible_user=rocky
+[standby2]
+IP.eu-north-1.compute.internal ansible_ssh_host=IP ansible_user=rocky
+
+[standbys:children]
+standby1
+standby2
+
+[conjur_vms:children]
+leader
+standby1
+standby2
+

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# INSTALL: Basic Script to install Conjur Leader (Master) Server (conjur1)
+
+# Global Variables
+containerName='{{ containername }}'
+directory='{{ conjur_dir }}'   ## Directory under /opt created for mounting - /cyberark or /cyberark/dap
+version='{{ version }}'		## Change to installation version
+sec='{{ required_dirs[0] }}'
+
+# Create Docker Container
+#echo "Creating Conjur Leader (Master) Server Container"
+#echo "------------------------------------"
+#set -x
+sudo '{{ engine }}' run \
+    --name $containerName \
+    --detach \
+    --restart=unless-stopped \
+    --security-opt apparmor=unconfined \
+    --publish "443:443" \
+    --publish "5432:5432" \
+    --publish "1999:1999" \
+    --log-driver journald \
+    --volume /opt/$directory/config:/etc/conjur/config:Z \
+    --volume /opt/$directory/security:/opt/cyberark/dap/security:Z \
+    --volume /opt/$directory/backups:/opt/conjur/backup:Z \
+    --volume /opt/$directory/seeds:/opt/cyberark/dap/seeds:Z \
+    --volume /opt/$directory/logs:/var/log/conjur:Z \
+    registry.tld/conjur-appliance:$version
+#set +x

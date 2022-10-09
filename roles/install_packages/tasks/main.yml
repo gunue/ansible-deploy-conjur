@@ -1,0 +1,13 @@
+---
+- name: Install required packages
+  yum: name={{ item }} state=present
+  with_items:
+    - epel-release
+    - vim
+    - wget
+    - mlocate
+    - rsync
+    - net-tools
+    - chrony
+    - yum-utils
+    - logrotate
