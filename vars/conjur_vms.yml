@@ -43,6 +43,7 @@ my_cluster_name: "my-cluster"
 ttl_cluster: "60"
 
 #############PASSWORD##############
+#To-do. Implement another cloud solution
 adminPass: "CyberArk!123"
 ###################################
 
